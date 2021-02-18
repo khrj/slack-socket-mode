@@ -134,14 +134,16 @@ export class SocketModeClient extends TypedEventTarget<Events> {
         .submachine(Finity.configure()
             .initialState('ready')
             .onEnter(() => {
-                if (this.badConnection) {
-                    // arrived here because `server ping timeout` ocurred and a new connection was created
-                    // tear down old connection
-                    this.teardownWebsocket()
-                    this.badConnection = false
-                }
+                // TODO
+                // if (this.badConnection) {
+                //     // arrived here because `server ping timeout` ocurred and a new connection was created
+                //     // tear down old connection
+                //     this.teardownWebsocket()
+                //     this.badConnection = false
+                // }
                 // start heartbeat to keep track of the websocket connection continuing to be alive
-                this.heartbeat()
+                // TODO
+                // this.heartbeat()
                 // the transition isn't done yet, so we delay the following statement until after the event loop returns
                 setTimeout(() => {
                     this.dispatchEvent(new TypedCustomEvent('ready', { detail: null }))
@@ -217,9 +219,10 @@ export class SocketModeClient extends TypedEventTarget<Events> {
             .state('closing-socket')
             .do(() => {
                 // stop heartbeat
-                if (this.pingTimeout !== undefined) {
-                    clearTimeout(this.pingTimeout)
-                }
+                // TODO
+                // if (this.pingTimeout !== undefined) {
+                //     clearTimeout(this.pingTimeout)
+                // }
 
                 return Promise.resolve(true)
             })
@@ -244,9 +247,10 @@ export class SocketModeClient extends TypedEventTarget<Events> {
             this.connected = false
             this.authenticated = false
 
-            if (this.pingTimeout !== undefined) {
-                clearTimeout(this.pingTimeout)
-            }
+            // TODO
+            // if (this.pingTimeout !== undefined) {
+            //     clearTimeout(this.pingTimeout)
+            // }
         })
         .state('disconnecting')
         .onEnter(() => {
@@ -262,9 +266,10 @@ export class SocketModeClient extends TypedEventTarget<Events> {
         // this state, and that the next state should be connecting.
         .state('reconnecting')
         .do(() => {
-            if (this.pingTimeout !== undefined) {
-                clearTimeout(this.pingTimeout)
-            }
+            // TODO
+            // if (this.pingTimeout !== undefined) {
+            //     clearTimeout(this.pingTimeout)
+            // }
             return Promise.resolve(true)
         })
         .onSuccess().transitionTo('connecting')
@@ -302,18 +307,21 @@ export class SocketModeClient extends TypedEventTarget<Events> {
 
     /**
      * How long to wait for pings from server before timing out
+     * TODO
      */
-    private clientPingTimeout: number
+    // private clientPingTimeout: number
 
     /**
      * reference to the timeout timer we use to listen to pings from the server
+     * TODO
      */
-    private pingTimeout: number | undefined
+    // private pingTimeout: number | undefined
 
     /**
      * Used to see if a websocket stops sending heartbeats and is deemed bad
+     * TODO
      */
-    private badConnection = false
+    // private badConnection = false
 
     constructor({
         logger = undefined,
@@ -329,7 +337,8 @@ export class SocketModeClient extends TypedEventTarget<Events> {
             throw new Error('Must provide an App Level Token when initalizing a Socket Mode Client')
         }
 
-        this.clientPingTimeout = clientPingTimeout
+        // TODO
+        // this.clientPingTimeout = clientPingTimeout
 
         // Setup the logger
         if (typeof logger !== 'undefined') {
@@ -462,7 +471,8 @@ export class SocketModeClient extends TypedEventTarget<Events> {
         websocket.onmessage = this.onWebsocketMessage.bind(this)
 
         // Confirm websocket connection is still active
-        websocket.addEventListener('ping', this.heartbeat.bind(this))
+        // TODO
+        // websocket.addEventListener('ping', this.heartbeat.bind(this))
     }
 
     /**
@@ -490,27 +500,28 @@ export class SocketModeClient extends TypedEventTarget<Events> {
     }
 
     /**
+     * TODO IMPLEMENT HEARTBEAT
      * confirms websocket connection is still active
      * fires whenever a ping event is received
      */
-    private heartbeat(): void {
-        if (this.pingTimeout !== undefined) {
-            clearTimeout(this.pingTimeout)
-        }
+    // private heartbeat(): void {
+    //     if (this.pingTimeout !== undefined) {
+    //         clearTimeout(this.pingTimeout)
+    //     }
 
-        // Don't start heartbeat if connection is already deemed bad
-        if (!this.badConnection) {
-            this.pingTimeout = setTimeout(() => {
-                this.logger.info(`A ping wasn't received from the server before the timeout of ${this.clientPingTimeout}ms!`)
-                if (this.stateMachine.getCurrentState() === 'connected'
-                    && this.stateMachine.getStateHierarchy()[1] === 'ready') {
-                    this.badConnection = true
-                    // opens secondary websocket and teardown original once that is ready
-                    this.stateMachine.handle('server pings not received')
-                }
-            }, this.clientPingTimeout)
-        }
-    }
+    //     // Don't start heartbeat if connection is already deemed bad
+    //     if (!this.badConnection) {
+    //         this.pingTimeout = setTimeout(() => {
+    //             this.logger.info(`A ping wasn't received from the server before the timeout of ${this.clientPingTimeout}ms!`)
+    //             if (this.stateMachine.getCurrentState() === 'connected'
+    //                 && this.stateMachine.getStateHierarchy()[1] === 'ready') {
+    //                 this.badConnection = true
+    //                 // opens secondary websocket and teardown original once that is ready
+    //                 this.stateMachine.handle('server pings not received')
+    //             }
+    //         }, this.clientPingTimeout)
+    //     }
+    // }
 
     /**
      * `onmessage` handler for the client's websocket. This will parse the
