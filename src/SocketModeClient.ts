@@ -1,6 +1,8 @@
 // deno-lint-ignore-file no-explicit-any
 import Finity from 'https://deno.land/x/finity@1.0.2/mod.js'
 import { StateMachine } from 'https://deno.land/x/finity@1.0.2/index.d.ts'
+import { TypedCustomEvent, TypedEventTarget } from "https://deno.land/x/typed_event_target@1.0.1/mod.ts"
+import { Events } from './events.ts'
 import {
     WebClient,
     WebAPICallResult,
@@ -18,14 +20,13 @@ import {
 
 import { name, version } from '../config.ts'
 
-
 /**
  * An Socket Mode Client allows programs to communicate with the
  * [Slack Platform's Events API](https://api.slack.com/events-api) over a websocket.
  * This object uses the EventEmitter pattern to dispatch incoming events and has a built in send method to
  * acknowledge incoming events over the websocket.
  */
-export class SocketModeClient extends EventTarget {
+export class SocketModeClient extends TypedEventTarget<Events> {
     /**
      * Whether or not the client is currently connected to the web socket
      */
@@ -82,7 +83,7 @@ export class SocketModeClient extends EventTarget {
                 this.logger.info(`unable to Socket Mode start: ${error.message}`)
 
                 // Observe this event when the error which causes reconnecting or disconnecting is meaningful
-                this.dispatchEvent(new CustomEvent('unable_to_socket_mode_start', { detail: error }))
+                this.dispatchEvent(new TypedCustomEvent('unable_to_socket_mode_start', { detail: error }))
                 let isRecoverable = true
                 if (error.code === APICallErrorCode.PlatformError &&
                     (Object.values(UnrecoverableSocketModeStartError) as string[]).includes(error.data.error)) {
@@ -101,7 +102,7 @@ export class SocketModeClient extends EventTarget {
                 this.authenticated = true
                 this.setupWebSocket(context.result.url)
                 setTimeout(() => {
-                    this.dispatchEvent(new CustomEvent('authenticated', { detail: context.result }))
+                    this.dispatchEvent(new TypedCustomEvent('authenticated', { detail: context.result }))
                 }, 0)
             })
             .on('websocket open').transitionTo('handshaking')
@@ -143,12 +144,10 @@ export class SocketModeClient extends EventTarget {
                 this.heartbeat()
                 // the transition isn't done yet, so we delay the following statement until after the event loop returns
                 setTimeout(() => {
-                    this.dispatchEvent(new Event('ready'))
+                    this.dispatchEvent(new TypedCustomEvent('ready', { detail: null }))
                 }, 0)
             })
-            // tslint:disable-next-line: max-line-length
             .on('server disconnect warning').transitionTo('refreshing-connection').withCondition(() => this.autoReconnectEnabled)
-            // tslint:disable-next-line: max-line-length
             .on('server pings not received').transitionTo('refreshing-connection').withCondition(() => this.autoReconnectEnabled)
             .on('server disconnect old socket').transitionTo('closing-socket')
             .state('refreshing-connection')
@@ -170,7 +169,7 @@ export class SocketModeClient extends EventTarget {
                     this.logger.info(`unable to Socket Mode start: ${error.message}`)
 
                     // Observe this event when the error which causes reconnecting or disconnecting is meaningful
-                    this.dispatchEvent(new CustomEvent('unable_to_socket_mode_start', { detail: error }))
+                    this.dispatchEvent(new TypedCustomEvent('unable_to_socket_mode_start', { detail: error }))
 
                     let isRecoverable = true
                     if (error.code === APICallErrorCode.PlatformError &&
@@ -190,7 +189,7 @@ export class SocketModeClient extends EventTarget {
                     this.authenticated = true
                     this.setupWebSocket(context.result.url)
                     setTimeout(() => {
-                        this.dispatchEvent(new CustomEvent('authenticated', { detail: context.result }))
+                        this.dispatchEvent(new TypedCustomEvent('authenticated', { detail: context.result }))
                     }, 0)
                 })
                 .on('websocket open').transitionTo('handshaking')
@@ -271,14 +270,14 @@ export class SocketModeClient extends EventTarget {
         .onSuccess().transitionTo('connecting')
         .onExit(() => this.teardownWebsocket())
         .global()
-        .onStateEnter((state: any, context: any) => {
+        .onStateEnter((state: 'disconnected' | 'connecting' | 'connected' | 'disconnecting' | 'reconnecting', context: any) => {
             this.logger.debug(`transitioning to state: ${state}`)
             if (state === 'disconnected') {
                 // Emits a `disconnected` event with a possible error object (might be undefined)
-                this.dispatchEvent(new CustomEvent(state, { detail: context.eventPayload }))
+                this.dispatchEvent(new TypedCustomEvent(state, { detail: context.eventPayload }))
             } else {
                 // Emits events: `connecting`, `connected`, `disconnecting`, `reconnecting`
-                this.dispatchEvent(new Event(state))
+                this.dispatchEvent(new TypedCustomEvent(state, { detail: null }))
             }
         })
         .getConfig()
@@ -421,7 +420,7 @@ export class SocketModeClient extends EventTarget {
                 this.logger.error('cannot send message when client is not ready')
                 reject(sendWhileNotReadyError())
             } else {
-                this.dispatchEvent(new CustomEvent('outgoing_message', { detail: message }))
+                this.dispatchEvent(new TypedCustomEvent('outgoing_message', { detail: message }))
 
                 const flatMessage = JSON.stringify(message)
                 this.logger.debug(`sending message on websocket: ${flatMessage}`)
@@ -457,7 +456,7 @@ export class SocketModeClient extends EventTarget {
         websocket.onclose = event => this.stateMachine.handle('websocket close', event)
         websocket.onerror = (event) => {
             this.logger.error(`A websocket error occurred: ${(event as ErrorEvent).message}`)
-            this.dispatchEvent(new CustomEvent('error', { detail: websocketErrorWithOriginal((event as ErrorEvent).error) }))
+            this.dispatchEvent(new TypedCustomEvent('error', { detail: websocketErrorWithOriginal((event as ErrorEvent).error) }))
         }
 
         websocket.onmessage = this.onWebsocketMessage.bind(this)
@@ -509,7 +508,6 @@ export class SocketModeClient extends EventTarget {
                     // opens secondary websocket and teardown original once that is ready
                     this.stateMachine.handle('server pings not received')
                 }
-                // tslint:disable-next-line: align
             }, this.clientPingTimeout)
         }
     }
@@ -569,15 +567,15 @@ export class SocketModeClient extends EventTarget {
 
         // for events_api messages, expose the type of the event
         if (event.type === 'events_api') {
-            this.dispatchEvent(new CustomEvent(event.payload.event.type, { detail: { ack, body: event.payload, event: event.payload.event } }))
+            this.dispatchEvent(new TypedCustomEvent(event.payload.event.type, { detail: { ack, body: event.payload, event: event.payload.event } }))
         } else {
             // emit just ack and body for all other types of messages
-            this.dispatchEvent(new CustomEvent(event.type, { detail: { ack, body: event.payload } }))
+            this.dispatchEvent(new TypedCustomEvent(event.type, { detail: { ack, body: event.payload } }))
         }
 
         // emitter for all slack events
         // used in tools like bolt-js
-        this.dispatchEvent(new CustomEvent('slack_event', { detail: { ack, type: event.type, body: event.payload } }))
+        this.dispatchEvent(new TypedCustomEvent('slack_event', { detail: { ack, type: event.type, body: event.payload } }))
     }
 }
 
@@ -608,3 +606,6 @@ enum UnrecoverableSocketModeStartError {
     UserRemovedFromTeam = 'user_removed_from_team',
     TeamDisabled = 'team_disabled',
 }
+
+export { TypedCustomEvent, TypedEventTarget } from "https://deno.land/x/typed_event_target@1.0.1/mod.ts"
+export type { Events } from './events.ts'

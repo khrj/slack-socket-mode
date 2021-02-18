@@ -94,7 +94,7 @@ export function noReplyReceivedError(): SMNoReplyReceivedError {
     return errorWithCode(
         new Error(
             "Message sent but no server acknowledgement was received. This may be caused by the client "
-            + "changing connection state rather than any issue with the specific message. Check before resending.",
+                + "changing connection state rather than any issue with the specific message. Check before resending.",
         ),
         ErrorCode.NoReplyReceivedError,
     ) as SMNoReplyReceivedError
