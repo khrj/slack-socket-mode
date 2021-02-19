@@ -1,4 +1,4 @@
-import { WebAPICallError } from "https://deno.land/x/slack_web_api@1.0.1/src/errors.ts"
+import { WebAPICallError } from "../deps.ts"
 
 export type APIEvent = {
     ack: (response: Record<string, unknown>) => Promise<void>

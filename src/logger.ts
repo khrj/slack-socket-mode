@@ -1,6 +1,6 @@
-import { ConsoleLogger, Logger, LogLevel } from "https://deno.land/x/slack_logger@3.0.0/mod.ts"
-export { LogLevel } from "https://deno.land/x/slack_logger@3.0.0/mod.ts"
-export type { Logger } from "https://deno.land/x/slack_logger@3.0.0/mod.ts"
+import { ConsoleLogger, Logger, LogLevel } from "../deps.ts"
+export { LogLevel } from "../deps.ts"
+export type { Logger } from "../deps.ts"
 
 let instanceCount = 0
 

@@ -1,7 +1,5 @@
 // deno-lint-ignore-file no-explicit-any
-import Finity from 'https://deno.land/x/finity@1.0.2/mod.js'
-import { StateMachine } from 'https://deno.land/x/finity@1.0.2/index.d.ts'
-import { TypedCustomEvent, TypedEventTarget } from "https://deno.land/x/typed_event_target@1.0.1/mod.ts"
+import { Finity, StateMachine, TypedCustomEvent, TypedEventTarget } from '../deps.ts'
 import { Events } from './events.ts'
 import {
     WebClient,
