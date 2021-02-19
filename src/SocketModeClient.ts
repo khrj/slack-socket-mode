@@ -569,7 +569,7 @@ export class SocketModeClient extends TypedEventTarget<Events> {
         }
 
         // Define Ack
-        const ack = async (response: Record<string, unknown>): Promise<void> => {
+        const ack = async (response: Record<string, unknown> = {}): Promise<void> => {
             this.logger.debug('calling ack', event.type)
             await this.send(event.envelope_id, response)
         }

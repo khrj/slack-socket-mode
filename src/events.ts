@@ -1,7 +1,7 @@
 import { WebAPICallError } from "../deps.ts"
 
 export type APIEvent = {
-    ack: (response: Record<string, unknown>) => Promise<void>
+    ack: (response?: Record<string, unknown>) => Promise<void>
     body: {
         [key: string]: any
     }
