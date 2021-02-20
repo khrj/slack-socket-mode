@@ -51,4 +51,5 @@ await socketModeClient.start()
 
 ## Related
 
+- [Deno Slack SDK](https://github.com/slack-deno/deno-slack-sdk)
 - [Deno modules](https://github.com/KhushrajRathod/DenoModules)
