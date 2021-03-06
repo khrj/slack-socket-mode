@@ -114,7 +114,7 @@ export type Events = {
     workflow_step_deleted: UnknownEventsAPIEvent
     workflow_step_execute: UnknownEventsAPIEvent
     workflow_unpublished: UnknownEventsAPIEvent
-    slash_command: {
+    slash_commands: {
         ack: (response?: Record<string, unknown>) => Promise<void>
         body: {
             token: string
